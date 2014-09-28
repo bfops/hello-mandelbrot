@@ -1,0 +1,16 @@
+[package]
+
+name = "hello-mandelbrot"
+version = "0.0.0"
+authors = [
+    "Ben Foppa <benjamin.foppa@gmail.com>",
+    "Elijah Andrews <elijahcandrews@gmail.com>",
+  ]
+
+[[bin]]
+
+name = "mandelbrot"
+path = "./rust/mandelbrot.rs"
+
+[dependencies.opencl]
+git = "https://github.com/csherratt/rust-opencl"

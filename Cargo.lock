@@ -1,0 +1,12 @@
+[root]
+name = "hello-mandelbrot"
+version = "0.0.0"
+dependencies = [
+ "opencl 0.2.0 (git+https://github.com/csherratt/rust-opencl#c7f5c24cf38d596f175fb49bb4d8af114664a70c)",
+]
+
+[[package]]
+name = "opencl"
+version = "0.2.0"
+source = "git+https://github.com/csherratt/rust-opencl#c7f5c24cf38d596f175fb49bb4d8af114664a70c"
+
