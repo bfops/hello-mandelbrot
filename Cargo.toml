@@ -13,4 +13,4 @@ name = "mandelbrot"
 path = "./rust/mandelbrot.rs"
 
 [dependencies.opencl]
-git = "https://github.com/csherratt/rust-opencl"
+git = "https://github.com/luqmana/rust-opencl"
