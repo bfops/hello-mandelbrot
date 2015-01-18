@@ -3,10 +3,17 @@ name = "hello-mandelbrot"
 version = "0.0.0"
 dependencies = [
  "gl 0.0.5 (git+https://github.com/bjz/gl-rs)",
+ "log 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "opencl 0.3.0-dev (git+https://github.com/luqmana/rust-opencl)",
  "sdl2 0.0.17 (git+https://github.com/AngryLawyer/rust-sdl2)",
+ "time 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "yaglw 0.0.0 (git+https://github.com/bfops/yaglw)",
 ]
+
+[[package]]
+name = "gcc"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "gl"
@@ -76,6 +83,14 @@ version = "0.0.16"
 source = "git+https://github.com/AngryLawyer/rust-sdl2#32b5df94f0e29805b7087d7b49ef9699e85d5640"
 dependencies = [
  "pkg-config 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "time"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "gcc 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

@@ -6,6 +6,7 @@ use std::mem;
 use std::time::duration::Duration;
 use sdl2;
 use sdl2::event::Event;
+use stopwatch::TimerSet;
 use yaglw::gl_context::{GLContext, GLContextExistence};
 use yaglw::shader::Shader;
 use yaglw::vertex_buffer::{GLArray, GLBuffer, GLType, VertexAttribData, DrawMode};
@@ -21,6 +22,8 @@ struct RGB {
 }
 
 pub fn main() {
+  let timers = TimerSet::new();
+
   let window = make_window();
 
   let _sdl_gl_context = window.gl_create_context().unwrap();
@@ -45,16 +48,22 @@ pub fn main() {
   let shader = make_shader(&gl);
   shader.use_shader(&mut gl_context);
 
-  let vao = make_picture(&gl, &mut gl_context, &shader);
+  let vao = timers.time("make_picture", || {
+    make_picture(&gl, &mut gl_context, &shader)
+  });
 
   while !quit_event() {
-    gl_context.clear_buffer();
-    vao.draw(&mut gl_context);
-    // swap buffers
-    window.gl_swap_window();
+    let vao = timers.time("draw", || {
+      gl_context.clear_buffer();
+      vao.draw(&mut gl_context);
+      // swap buffers
+      window.gl_swap_window();
+    });
 
     timer::sleep(Duration::milliseconds(10));
   }
+
+  timers.print();
 }
 
 fn make_shader<'a>(

@@ -12,6 +12,10 @@ authors = [
 name = "mandelbrot"
 path = "./src/bin.rs"
 
+[dependencies]
+log = "*"
+time = "*"
+
 [dependencies.opencl]
 git = "https://github.com/luqmana/rust-opencl"
 
