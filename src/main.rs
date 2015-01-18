@@ -138,28 +138,62 @@ fn make_picture<'a>(
 fn do_opencl() -> Vec<RGB> {
   let (device, ctx, queue) = opencl::util::create_compute_context().unwrap();
 
-  let len = WINDOW_WIDTH * WINDOW_HEIGHT;
-  let len = len as usize;
+  let len = WINDOW_WIDTH as usize * WINDOW_HEIGHT as usize;
 
   let output_buffer: CLBuffer<RGB> = ctx.create_buffer(len, opencl::cl::CL_MEM_WRITE_ONLY);
 
   let program = {
     let ker = format!("
-      __kernel void color(__global float *output) {{
-        int W = {};
-        int H = {};
-        int i = get_global_id(0);
-        float x = i % W;
-        float y = i / W;
-        i = 3 * i;
-        output[i] = 0;
-        output[i + 1] = x / W;
-        output[i + 2] = y / H;
-      }}
-    ", WINDOW_WIDTH, WINDOW_HEIGHT);
+        __kernel void color(__global float * output) {{
+          int W = {};
+          int H = {};
+
+          int maxIt = 128;
+          float R = 100;
+
+          int i = get_global_id(0);
+
+          float l = -2;
+          float r = 2;
+          float b = -2;
+          float t = 2;
+
+          float c_x = i % W;
+          float c_y = i / W;
+          c_x = (c_x / W) * (r - l) + l;
+          c_y = (c_y / H) * (t - b) + b;
+
+          float x = 0;
+          float y = 0;
+          int it;
+          for (it = 0; it < maxIt; ++it)
+          {{
+            float x2 = x * x;
+            float y2 = y * y;
+            if (x2 + y2 > R * R)
+              break;
+            // Ordering is important here.
+            y = 2*x*y + c_y;
+            x = x2 - y2 + c_x;
+          }}
+
+          i = i * 3;
+
+          if (it < maxIt) {{
+            float progress = (float)it / (float)maxIt;
+            output[i] = progress;
+            output[i + 1] = 1 - 2 * fabs(0.5 - progress);
+            output[i + 2] = 0.5 * (1 - progress);
+          }} else {{
+            output[i] = 0;
+            output[i + 1] = 0;
+            output[i + 2] = 0;
+          }}
+        }}
+      ", WINDOW_WIDTH, WINDOW_HEIGHT);
     ctx.create_program_from_source(ker.as_slice())
   };
-  program.build(&device).ok().expect("Couldn't build program.");
+  program.build(&device).unwrap();
 
   let kernel = program.create_kernel("color");
   // This is sketchy; we "implicitly cast" output_buffer from a CLBuffer<RGB> to a CLBuffer<f32>.
@@ -180,14 +214,16 @@ fn make_window() -> sdl2::video::Window {
     sdl2::video::GLProfile::GLCoreProfile as isize
   );
 
-  sdl2::video::Window::new(
+  let window = sdl2::video::Window::new(
     "OpenCL",
     sdl2::video::WindowPos::PosCentered,
     sdl2::video::WindowPos::PosCentered,
-    800,
-    600,
+    WINDOW_WIDTH as isize,
+    WINDOW_HEIGHT as isize,
     sdl2::video::OPENGL,
-  ).unwrap()
+  ).unwrap();
+
+  window
 }
 
 fn quit_event() -> bool {
