@@ -186,6 +186,7 @@ fn process_events<'a>(
         return false;
       },
       Event::MouseButtonDown(_, _, _, btn, x, y) => {
+        let y = WINDOW_HEIGHT as i32 - y;
         match btn {
           Mouse::Left => {
             let ww = WINDOW_WIDTH as f32;
