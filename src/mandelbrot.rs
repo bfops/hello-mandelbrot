@@ -3,10 +3,10 @@ use opencl;
 use opencl::mem::CLBuffer;
 
 pub struct Mandelbrot {
-  pub low_x: f32,
-  pub low_y: f32,
-  pub width: f32,
-  pub height: f32,
+  pub low_x: f64,
+  pub low_y: f64,
+  pub width: f64,
+  pub height: f64,
   pub max_iter: u32,
 }
 
@@ -21,32 +21,32 @@ impl Mandelbrot {
     let program = {
       let ker = format!("
           __kernel void color(
-            const float low_x,
-            const float low_y,
-            const float width,
-            const float height,
+            const double low_x,
+            const double low_y,
+            const double width,
+            const double height,
             const int max_iter,
             __global float * output)
           {{
             int W = {};
             int H = {};
 
-            float R = 100;
+            double R = 100;
 
             int i = get_global_id(0);
 
-            float c_x = i % W;
-            float c_y = i / W;
+            double c_x = i % W;
+            double c_y = i / W;
             c_x = (c_x / W) * width + low_x;
             c_y = (c_y / H) * height + low_y;
 
-            float x = 0;
-            float y = 0;
+            double x = 0;
+            double y = 0;
             int it;
             for (it = 0; it < max_iter; ++it)
             {{
-              float x2 = x * x;
-              float y2 = y * y;
+              double x2 = x * x;
+              double y2 = y * y;
               if (x2 + y2 > R * R)
                 break;
               // Ordering is important here.

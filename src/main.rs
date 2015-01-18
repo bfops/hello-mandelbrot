@@ -189,10 +189,10 @@ fn process_events<'a>(
         let y = WINDOW_HEIGHT as i32 - y;
         match btn {
           Mouse::Left => {
-            let ww = WINDOW_WIDTH as f32;
-            let wh = WINDOW_HEIGHT as f32;
-            mdlbt.low_x += (x as f32) * mdlbt.width / ww;
-            mdlbt.low_y += (y as f32) * mdlbt.height / wh;
+            let ww = WINDOW_WIDTH as f64;
+            let wh = WINDOW_HEIGHT as f64;
+            mdlbt.low_x += (x as f64) * mdlbt.width / ww;
+            mdlbt.low_y += (y as f64) * mdlbt.height / wh;
             mdlbt.width /= ww;
             mdlbt.height /= wh;
 
@@ -201,12 +201,12 @@ fn process_events<'a>(
             });
           },
           Mouse::Right => {
-            let ww = WINDOW_WIDTH as f32;
-            let wh = WINDOW_HEIGHT as f32;
+            let ww = WINDOW_WIDTH as f64;
+            let wh = WINDOW_HEIGHT as f64;
             mdlbt.width *= ww;
             mdlbt.height *= wh;
-            mdlbt.low_x -= (x as f32) * mdlbt.width / ww;
-            mdlbt.low_y -= (y as f32) * mdlbt.height / wh;
+            mdlbt.low_x -= (x as f64) * mdlbt.width / ww;
+            mdlbt.low_y -= (y as f64) * mdlbt.height / wh;
 
             timers.time("update", || {
               vao.buffer.update(gl, 0, mdlbt.render().as_slice());
