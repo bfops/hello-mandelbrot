@@ -53,7 +53,7 @@ pub fn main() {
   });
 
   while !quit_event() {
-    let vao = timers.time("draw", || {
+    timers.time("draw", || {
       gl_context.clear_buffer();
       vao.draw(&mut gl_context);
       // swap buffers
