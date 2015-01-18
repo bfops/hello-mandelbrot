@@ -191,10 +191,10 @@ fn process_events<'a>(
           Mouse::Left => {
             let ww = WINDOW_WIDTH as f32;
             let wh = WINDOW_HEIGHT as f32;
-            mdlbt.low_x = (x as f32) / ww * mdlbt.width + mdlbt.low_x;
-            mdlbt.low_y = (y as f32) / wh * mdlbt.height + mdlbt.low_y;
-            mdlbt.width = mdlbt.width / ww;
-            mdlbt.height = mdlbt.height / wh;
+            mdlbt.low_x += (x as f32) * mdlbt.width / ww;
+            mdlbt.low_y += (y as f32) * mdlbt.height / wh;
+            mdlbt.width /= ww;
+            mdlbt.height /= wh;
 
             timers.time("update", || {
               vao.buffer.update(gl, 0, mdlbt.render().as_slice());
@@ -203,10 +203,10 @@ fn process_events<'a>(
           Mouse::Right => {
             let ww = WINDOW_WIDTH as f32;
             let wh = WINDOW_HEIGHT as f32;
-            mdlbt.width = mdlbt.width * ww;
-            mdlbt.height = mdlbt.height * wh;
-            mdlbt.low_x = mdlbt.low_x - mdlbt.width / 2.0;
-            mdlbt.low_y = mdlbt.low_y - mdlbt.height / 2.0;
+            mdlbt.width *= ww;
+            mdlbt.height *= wh;
+            mdlbt.low_x -= (x as f32) * mdlbt.width / ww;
+            mdlbt.low_y -= (y as f32) * mdlbt.height / wh;
 
             timers.time("update", || {
               vao.buffer.update(gl, 0, mdlbt.render().as_slice());
