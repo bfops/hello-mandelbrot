@@ -196,6 +196,23 @@ fn process_events<'a>(
           vao.buffer.update(gl, 0, mdlbt.render().as_slice());
         });
       },
+      Event::KeyDown(_, _, key, _, _, repeat) => {
+        if !repeat {
+          if key == KeyCode::Up {
+            mdlbt.max_iter *= 2;
+
+            timers.time("update", || {
+              vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+            });
+          } else if key == KeyCode::Down {
+            mdlbt.max_iter /= 2;
+
+            timers.time("update", || {
+              vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+            });
+          }
+        }
+      },
       _ => {},
     }
   }
