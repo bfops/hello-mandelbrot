@@ -7,6 +7,7 @@ extern crate time;
 extern crate yaglw;
 
 mod main;
+mod mandelbrot;
 mod stopwatch;
 
 pub fn main() {
