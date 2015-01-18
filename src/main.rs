@@ -6,6 +6,7 @@ use std::time::duration::Duration;
 use sdl2;
 use sdl2::event::Event;
 use sdl2::keycode::KeyCode;
+use sdl2::mouse::Mouse;
 use stopwatch::TimerSet;
 use yaglw::gl_context::{GLContext, GLContextExistence};
 use yaglw::shader::Shader;
@@ -184,32 +185,41 @@ fn process_events<'a>(
       Event::AppTerminating(_) => {
         return false;
       },
-      Event::MouseButtonDown(_, _, _, _, x, y) => {
-        let ww = WINDOW_WIDTH as f32;
-        let wh = WINDOW_HEIGHT as f32;
-        mdlbt.low_x = (x as f32) / ww * mdlbt.width + mdlbt.low_x;
-        mdlbt.low_y = (y as f32) / wh * mdlbt.height + mdlbt.low_y;
-        mdlbt.width = mdlbt.width / ww;
-        mdlbt.height = mdlbt.height / wh;
+      Event::MouseButtonDown(_, _, _, btn, x, y) => {
+        match btn {
+          Mouse::Left => {
+            let ww = WINDOW_WIDTH as f32;
+            let wh = WINDOW_HEIGHT as f32;
+            mdlbt.low_x = (x as f32) / ww * mdlbt.width + mdlbt.low_x;
+            mdlbt.low_y = (y as f32) / wh * mdlbt.height + mdlbt.low_y;
+            mdlbt.width = mdlbt.width / ww;
+            mdlbt.height = mdlbt.height / wh;
 
-        timers.time("update", || {
-          vao.buffer.update(gl, 0, mdlbt.render().as_slice());
-        });
+            timers.time("update", || {
+              vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+            });
+          },
+          _ => {},
+        };
       },
       Event::KeyDown(_, _, key, _, _, repeat) => {
         if !repeat {
-          if key == KeyCode::Up {
-            mdlbt.max_iter *= 2;
+          match key {
+            KeyCode::Up => {
+              mdlbt.max_iter *= 2;
 
-            timers.time("update", || {
-              vao.buffer.update(gl, 0, mdlbt.render().as_slice());
-            });
-          } else if key == KeyCode::Down {
-            mdlbt.max_iter /= 2;
+              timers.time("update", || {
+                vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+              });
+            },
+            KeyCode::Down => {
+              mdlbt.max_iter /= 2;
 
-            timers.time("update", || {
-              vao.buffer.update(gl, 0, mdlbt.render().as_slice());
-            });
+              timers.time("update", || {
+                vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+              });
+            },
+            _ => {},
           }
         }
       },
