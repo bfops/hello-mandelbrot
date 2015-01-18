@@ -50,15 +50,18 @@ pub fn main() {
   let mut vao = make_vao(&gl, &mut gl_context, &shader);
   vao.bind(&mut gl_context);
 
-  let mandelbrot =
+  let mdlbt =
     Mandelbrot {
       low_x: -2.0,
       low_y: -2.0,
       width: 4.0,
       height: 4.0,
+      max_iter: 128,
     };
 
-  vao.push(&mut gl_context, mandelbrot.render().as_slice());
+  timers.time("update", || {
+    vao.push(&mut gl_context, mdlbt.render().as_slice());
+  });
 
   while process_events() {
     timers.time("draw", || {

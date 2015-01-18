@@ -7,6 +7,7 @@ pub struct Mandelbrot {
   pub low_y: f32,
   pub width: f32,
   pub height: f32,
+  pub max_iter: u32,
 }
 
 impl Mandelbrot {
@@ -24,12 +25,12 @@ impl Mandelbrot {
             const float low_y,
             const float width,
             const float height,
+            const int max_iter,
             __global float * output)
           {{
             int W = {};
             int H = {};
 
-            int maxIt = 128;
             float R = 100;
 
             int i = get_global_id(0);
@@ -42,7 +43,7 @@ impl Mandelbrot {
             float x = 0;
             float y = 0;
             int it;
-            for (it = 0; it < maxIt; ++it)
+            for (it = 0; it < max_iter; ++it)
             {{
               float x2 = x * x;
               float y2 = y * y;
@@ -55,8 +56,8 @@ impl Mandelbrot {
 
             i = i * 3;
 
-            if (it < maxIt) {{
-              float progress = (float)it / (float)maxIt;
+            if (it < max_iter) {{
+              float progress = (float)it / (float)max_iter;
               output[i] = progress;
               output[i + 1] = 1 - 2 * fabs(0.5 - progress);
               output[i + 2] = 0.5 * (1 - progress);
@@ -76,9 +77,10 @@ impl Mandelbrot {
     kernel.set_arg(1, &self.low_y);
     kernel.set_arg(2, &self.width);
     kernel.set_arg(3, &self.height);
+    kernel.set_arg(4, &self.max_iter);
 
     // This is sketchy; we "implicitly cast" output_buffer from a CLBuffer<RGB> to a CLBuffer<f32>.
-    kernel.set_arg(4, &output_buffer);
+    kernel.set_arg(5, &output_buffer);
 
     let event = queue.enqueue_async_kernel(&kernel, len, None, ());
 
