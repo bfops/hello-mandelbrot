@@ -1,10 +1,8 @@
 use gl;
 use opencl;
 use opencl::mem::CLBuffer;
-use std::io::File;
 use std::io::timer;
 use std::mem;
-use std::str;
 use std::time::duration::Duration;
 use sdl2;
 use sdl2::event::Event;
@@ -14,6 +12,13 @@ use yaglw::vertex_buffer::{GLArray, GLBuffer, GLType, VertexAttribData, DrawMode
 
 static WINDOW_WIDTH: u32 = 800;
 static WINDOW_HEIGHT: u32 = 600;
+
+#[repr(C)]
+struct RGB {
+  pub r: f32,
+  pub g: f32,
+  pub b: f32,
+}
 
 pub fn main() {
   let window = make_window();
@@ -58,15 +63,14 @@ fn make_shader<'a>(
   let vertex_shader: String = format!("
     #version 330 core
 
-    in uint sum;
-
     const int W = {};
     const int H = {};
 
-    out vec4 color;
+    in vec3 color;
+    out vec4 v_color;
 
     void main() {{
-      color = vec4(0, float(sum) / (W + H), 0, 1);
+      v_color = vec4(color, 1);
       gl_Position =
         vec4(
           float(gl_VertexID % W) / W * 2 - 1,
@@ -79,10 +83,10 @@ fn make_shader<'a>(
   let fragment_shader: String = "
     #version 330 core
 
-    in vec4 color;
+    in vec4 v_color;
 
     void main() {
-      gl_FragColor = color;
+      gl_FragColor = v_color;
     }
   ".to_string();
 
@@ -98,7 +102,7 @@ fn make_picture<'a>(
   gl: &'a GLContextExistence,
   gl_context: &mut GLContext,
   shader: &Shader<'a>,
-) -> GLArray<'a, u32> {
+) -> GLArray<'a, RGB> {
   let dat = do_opencl();
 
   let mut vbo = GLBuffer::new(gl, gl_context, dat.len());
@@ -106,9 +110,9 @@ fn make_picture<'a>(
 
   let attribs = [
     VertexAttribData {
-      name: "sum",
-      size: 1,
-      unit: GLType::UInt,
+      name: "color",
+      size: 3,
+      unit: GLType::Float,
     },
   ];
 
@@ -122,37 +126,35 @@ fn make_picture<'a>(
   )
 }
 
-fn do_opencl() -> Vec<u32> {
+fn do_opencl() -> Vec<RGB> {
   let (device, ctx, queue) = opencl::util::create_compute_context().unwrap();
 
   let len = WINDOW_WIDTH * WINDOW_HEIGHT;
-
-  let x_values: Vec<u32> =
-    range(0, len).map(|i| i % WINDOW_WIDTH).collect();
-  let y_values: Vec<u32> =
-    range(0, len).map(|i| i / WINDOW_WIDTH).collect();
-
   let len = len as usize;
 
-  let x_value_buffer: CLBuffer<u32> = ctx.create_buffer(len, opencl::cl::CL_MEM_READ_ONLY);
-  let y_value_buffer: CLBuffer<u32> = ctx.create_buffer(len, opencl::cl::CL_MEM_READ_ONLY);
-  let output_buffer: CLBuffer<u32> = ctx.create_buffer(len, opencl::cl::CL_MEM_WRITE_ONLY);
+  let output_buffer: CLBuffer<RGB> = ctx.create_buffer(len, opencl::cl::CL_MEM_WRITE_ONLY);
 
-  queue.write(&x_value_buffer, &x_values.as_slice(), ());
-  queue.write(&y_value_buffer, &y_values.as_slice(), ());
-
-  let path = Path::new("opencl/add.ocl");
-  let ker = File::open(&path).read_to_end().unwrap();
   let program = {
-    let ker = str::from_utf8(ker.as_slice()).unwrap();
-    ctx.create_program_from_source(ker)
+    let ker = format!("
+      __kernel void color(__global float *output) {{
+        int W = {};
+        int H = {};
+        int i = get_global_id(0);
+        float x = i % W;
+        float y = i / W;
+        i = 3 * i;
+        output[i] = 0;
+        output[i + 1] = x / W;
+        output[i + 2] = y / H;
+      }}
+    ", WINDOW_WIDTH, WINDOW_HEIGHT);
+    ctx.create_program_from_source(ker.as_slice())
   };
   program.build(&device).ok().expect("Couldn't build program.");
 
-  let kernel = program.create_kernel("vector_add");
-  kernel.set_arg(0, &x_value_buffer);
-  kernel.set_arg(1, &y_value_buffer);
-  kernel.set_arg(2, &output_buffer);
+  let kernel = program.create_kernel("color");
+  // This is sketchy; we "implicitly cast" output_buffer from a CLBuffer<RGB> to a CLBuffer<f32>.
+  kernel.set_arg(0, &output_buffer);
 
   let event = queue.enqueue_async_kernel(&kernel, len, None, ());
 

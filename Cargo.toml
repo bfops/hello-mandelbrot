@@ -10,7 +10,7 @@ authors = [
 [[bin]]
 
 name = "mandelbrot"
-path = "./rust/mandelbrot.rs"
+path = "./src/bin.rs"
 
 [dependencies.opencl]
 git = "https://github.com/luqmana/rust-opencl"
