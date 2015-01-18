@@ -5,6 +5,7 @@ use std::mem;
 use std::time::duration::Duration;
 use sdl2;
 use sdl2::event::Event;
+use sdl2::keycode::KeyCode;
 use stopwatch::TimerSet;
 use yaglw::gl_context::{GLContext, GLContextExistence};
 use yaglw::shader::Shader;
@@ -50,7 +51,7 @@ pub fn main() {
   let mut vao = make_vao(&gl, &mut gl_context, &shader);
   vao.bind(&mut gl_context);
 
-  let mdlbt =
+  let mut mdlbt =
     Mandelbrot {
       low_x: -2.0,
       low_y: -2.0,
@@ -63,7 +64,7 @@ pub fn main() {
     vao.push(&mut gl_context, mdlbt.render().as_slice());
   });
 
-  while process_events() {
+  while process_events(&timers, &mut gl_context, &mut mdlbt, &mut vao) {
     timers.time("draw", || {
       gl_context.clear_buffer();
       vao.draw(&mut gl_context);
@@ -166,7 +167,12 @@ fn make_vao<'a>(
   )
 }
 
-fn process_events() -> bool {
+fn process_events<'a>(
+  timers: &TimerSet,
+  gl: &mut GLContext,
+  mdlbt: &mut Mandelbrot,
+  vao: &mut GLArray<'a, RGB>,
+) -> bool {
   loop {
     match sdl2::event::poll_event() {
       Event::None => {
@@ -174,10 +180,22 @@ fn process_events() -> bool {
       },
       Event::Quit(_) => {
         return false;
-      }
+      },
       Event::AppTerminating(_) => {
         return false;
-      }
+      },
+      Event::MouseButtonDown(_, _, _, _, x, y) => {
+        let ww = WINDOW_WIDTH as f32;
+        let wh = WINDOW_HEIGHT as f32;
+        mdlbt.low_x = (x as f32) / ww * mdlbt.width + mdlbt.low_x;
+        mdlbt.low_y = (y as f32) / wh * mdlbt.height + mdlbt.low_y;
+        mdlbt.width = mdlbt.width / ww;
+        mdlbt.height = mdlbt.height / wh;
+
+        timers.time("update", || {
+          vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+        });
+      },
       _ => {},
     }
   }
