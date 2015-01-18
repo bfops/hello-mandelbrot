@@ -200,6 +200,18 @@ fn process_events<'a>(
               vao.buffer.update(gl, 0, mdlbt.render().as_slice());
             });
           },
+          Mouse::Right => {
+            let ww = WINDOW_WIDTH as f32;
+            let wh = WINDOW_HEIGHT as f32;
+            mdlbt.width = mdlbt.width * ww;
+            mdlbt.height = mdlbt.height * wh;
+            mdlbt.low_x = mdlbt.low_x - mdlbt.width / 2.0;
+            mdlbt.low_y = mdlbt.low_y - mdlbt.height / 2.0;
+
+            timers.time("update", || {
+              vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+            });
+          }
           _ => {},
         };
       },
