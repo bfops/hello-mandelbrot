@@ -155,7 +155,7 @@ fn make_vao<'a>(
     },
   ];
 
-  let capacity = WINDOW_WIDTH as usize * WINDOW_HEIGHT as usize * 3;
+  let capacity = WINDOW_WIDTH as usize * WINDOW_HEIGHT as usize;
   let vbo = GLBuffer::new(gl, gl_context, capacity);
 
   GLArray::new(
