@@ -144,7 +144,13 @@ fn do_opencl() -> Vec<RGB> {
 
   let program = {
     let ker = format!("
-        __kernel void color(__global float * output) {{
+        __kernel void color(
+          const float low_x,
+          const float low_y,
+          const float width,
+          const float height,
+          __global float * output)
+        {{
           int W = {};
           int H = {};
 
@@ -153,15 +159,10 @@ fn do_opencl() -> Vec<RGB> {
 
           int i = get_global_id(0);
 
-          float l = -2;
-          float r = 2;
-          float b = -2;
-          float t = 2;
-
           float c_x = i % W;
           float c_y = i / W;
-          c_x = (c_x / W) * (r - l) + l;
-          c_y = (c_y / H) * (t - b) + b;
+          c_x = (c_x / W) * width + low_x;
+          c_y = (c_y / H) * height + low_y;
 
           float x = 0;
           float y = 0;
@@ -196,8 +197,13 @@ fn do_opencl() -> Vec<RGB> {
   program.build(&device).unwrap();
 
   let kernel = program.create_kernel("color");
+  kernel.set_arg(0, &(-2.0 as f32));
+  kernel.set_arg(1, &(-2.0 as f32));
+  kernel.set_arg(2, &(4.0 as f32));
+  kernel.set_arg(3, &(4.0 as f32));
+
   // This is sketchy; we "implicitly cast" output_buffer from a CLBuffer<RGB> to a CLBuffer<f32>.
-  kernel.set_arg(0, &output_buffer);
+  kernel.set_arg(4, &output_buffer);
 
   let event = queue.enqueue_async_kernel(&kernel, len, None, ());
 
