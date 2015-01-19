@@ -2,12 +2,14 @@ use main::{WINDOW_WIDTH, WINDOW_HEIGHT, RGB};
 use opencl;
 use opencl::mem::CLBuffer;
 
+#[derive(Show)]
 pub struct Mandelbrot {
   pub low_x: f64,
   pub low_y: f64,
   pub width: f64,
   pub height: f64,
   pub max_iter: u32,
+  pub radius: f64,
 }
 
 impl Mandelbrot {
@@ -26,19 +28,18 @@ impl Mandelbrot {
             const double width,
             const double height,
             const int max_iter,
+            const double radius,
             __global float * output)
           {{
             int W = {};
             int H = {};
 
-            double R = 100;
-
             int i = get_global_id(0);
 
             double c_x = i % W;
             double c_y = i / W;
-            c_x = (c_x / W) * width + low_x;
-            c_y = (c_y / H) * height + low_y;
+            c_x = c_x * width / W + low_x;
+            c_y = c_y * height / H + low_y;
 
             double x = 0;
             double y = 0;
@@ -47,7 +48,7 @@ impl Mandelbrot {
             {{
               double x2 = x * x;
               double y2 = y * y;
-              if (x2 + y2 > R * R)
+              if (x2 + y2 > radius * radius)
                 break;
               // Ordering is important here.
               y = 2*x*y + c_y;
@@ -78,9 +79,10 @@ impl Mandelbrot {
     kernel.set_arg(2, &self.width);
     kernel.set_arg(3, &self.height);
     kernel.set_arg(4, &self.max_iter);
+    kernel.set_arg(5, &self.radius);
 
     // This is sketchy; we "implicitly cast" output_buffer from a CLBuffer<RGB> to a CLBuffer<f32>.
-    kernel.set_arg(5, &output_buffer);
+    kernel.set_arg(6, &output_buffer);
 
     let event = queue.enqueue_async_kernel(&kernel, len, None, ());
 

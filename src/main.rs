@@ -59,6 +59,7 @@ pub fn main() {
       width: 4.0,
       height: 4.0,
       max_iter: 128,
+      radius: 128.0,
     };
 
   timers.time("update", || {
@@ -231,6 +232,20 @@ fn process_events<'a>(
             },
             KeyCode::Down => {
               mdlbt.max_iter /= 2;
+
+              timers.time("update", || {
+                vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+              });
+            },
+            KeyCode::Right => {
+              mdlbt.radius *= 2.0;
+
+              timers.time("update", || {
+                vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+              });
+            },
+            KeyCode::Left => {
+              mdlbt.radius /= 2.0;
 
               timers.time("update", || {
                 vao.buffer.update(gl, 0, mdlbt.render().as_slice());
