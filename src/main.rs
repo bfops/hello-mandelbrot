@@ -13,7 +13,7 @@ use yaglw::shader::Shader;
 use yaglw::vertex_buffer::{GLArray, GLBuffer, GLType, VertexAttribData, DrawMode};
 
 pub const WINDOW_WIDTH: u32 = 800;
-pub const WINDOW_HEIGHT: u32 = 600;
+pub const WINDOW_HEIGHT: u32 = 800;
 
 #[repr(C)]
 pub struct RGB {
