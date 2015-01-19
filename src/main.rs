@@ -113,8 +113,8 @@ fn make_shader<'a>(
   ".to_string();
 
   let components = vec!(
-    ((vertex_shader, gl::VERTEX_SHADER)),
-    ((fragment_shader, gl::FRAGMENT_SHADER)),
+    (gl::VERTEX_SHADER, vertex_shader),
+    (gl::FRAGMENT_SHADER, fragment_shader),
   );
 
   Shader::new(gl, components.into_iter())

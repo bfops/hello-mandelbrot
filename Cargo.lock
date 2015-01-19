@@ -11,6 +11,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitflags"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "gcc"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -38,7 +43,7 @@ dependencies = [
  "gl_common 0.0.3 (git+https://github.com/bjz/gl-rs)",
  "khronos_api 0.0.5 (git+https://github.com/bjz/gl-rs)",
  "log 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "xml-rs 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "xml-rs 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -95,13 +100,16 @@ dependencies = [
 
 [[package]]
 name = "xml-rs"
-version = "0.1.12"
+version = "0.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "bitflags 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "yaglw"
 version = "0.0.0"
-source = "git+https://github.com/bfops/yaglw#184920a58be29ed40441ed1f5748e26ca3ed72f9"
+source = "git+https://github.com/bfops/yaglw#582295296381aa6f15ae40a2d22652d6522e2f33"
 dependencies = [
  "gl 0.0.5 (git+https://github.com/bjz/gl-rs)",
  "log 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
