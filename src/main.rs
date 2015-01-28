@@ -1,5 +1,6 @@
 use gl;
 use mandelbrot::Mandelbrot;
+use opencl_context::CL;
 use std::io::timer;
 use std::mem;
 use std::time::duration::Duration;
@@ -24,6 +25,10 @@ pub struct RGB {
 
 pub fn main() {
   let timers = TimerSet::new();
+
+  let cl = unsafe {
+    CL::new()
+  };
 
   let window = make_window();
 
@@ -60,13 +65,14 @@ pub fn main() {
       height: 4.0,
       max_iter: 128,
       radius: 128.0,
+      ..Mandelbrot::new(&cl)
     };
 
   timers.time("update", || {
-    vao.push(&mut gl_context, mdlbt.render().as_slice());
+    vao.push(&mut gl_context, mdlbt.render(&cl).as_slice());
   });
 
-  while process_events(&timers, &mut gl_context, &mut mdlbt, &mut vao) {
+  while process_events(&timers, &mut gl_context, &cl, &mut mdlbt, &mut vao) {
     timers.time("draw", || {
       gl_context.clear_buffer();
       vao.draw(&mut gl_context);
@@ -172,6 +178,7 @@ fn make_vao<'a>(
 fn process_events<'a>(
   timers: &TimerSet,
   gl: &mut GLContext,
+  cl: &CL,
   mdlbt: &mut Mandelbrot,
   vao: &mut GLArray<'a, RGB>,
 ) -> bool {
@@ -200,7 +207,7 @@ fn process_events<'a>(
             mdlbt.low_y -= mdlbt.height / 2.0;
 
             timers.time("update", || {
-              vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+              vao.buffer.update(gl, 0, mdlbt.render(cl).as_slice());
             });
           },
           Mouse::Right => {
@@ -214,7 +221,7 @@ fn process_events<'a>(
             mdlbt.low_y -= (y as f64) * mdlbt.height / wh;
 
             timers.time("update", || {
-              vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+              vao.buffer.update(gl, 0, mdlbt.render(cl).as_slice());
             });
           }
           _ => {},
@@ -227,28 +234,28 @@ fn process_events<'a>(
               mdlbt.max_iter *= 2;
 
               timers.time("update", || {
-                vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+                vao.buffer.update(gl, 0, mdlbt.render(cl).as_slice());
               });
             },
             KeyCode::Down => {
               mdlbt.max_iter /= 2;
 
               timers.time("update", || {
-                vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+                vao.buffer.update(gl, 0, mdlbt.render(cl).as_slice());
               });
             },
             KeyCode::Right => {
               mdlbt.radius *= 2.0;
 
               timers.time("update", || {
-                vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+                vao.buffer.update(gl, 0, mdlbt.render(cl).as_slice());
               });
             },
             KeyCode::Left => {
               mdlbt.radius /= 2.0;
 
               timers.time("update", || {
-                vao.buffer.update(gl, 0, mdlbt.render().as_slice());
+                vao.buffer.update(gl, 0, mdlbt.render(cl).as_slice());
               });
             },
             _ => {},

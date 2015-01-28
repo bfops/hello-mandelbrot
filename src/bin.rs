@@ -8,6 +8,7 @@ extern crate yaglw;
 
 mod main;
 mod mandelbrot;
+mod opencl_context;
 mod stopwatch;
 
 pub fn main() {

@@ -1,8 +1,9 @@
 use main::{WINDOW_WIDTH, WINDOW_HEIGHT, RGB};
 use opencl;
+use opencl::hl::{Program, Kernel};
 use opencl::mem::CLBuffer;
+use opencl_context::CL;
 
-#[derive(Show)]
 pub struct Mandelbrot {
   pub low_x: f64,
   pub low_y: f64,
@@ -10,15 +11,16 @@ pub struct Mandelbrot {
   pub height: f64,
   pub max_iter: u32,
   pub radius: f64,
+
+  output_buffer: CLBuffer<RGB>,
+  len: usize,
+  program: Program,
+  kernel: Kernel,
 }
 
 impl Mandelbrot {
-  pub fn render(&self) -> Vec<RGB> {
-    let (device, ctx, queue) = opencl::util::create_compute_context().unwrap();
-
+  pub fn new(cl: &CL) -> Mandelbrot {
     let len = WINDOW_WIDTH as usize * WINDOW_HEIGHT as usize;
-
-    let output_buffer: CLBuffer<RGB> = ctx.create_buffer(len, opencl::cl::CL_MEM_WRITE_ONLY);
 
     let program = {
       let ker = format!("
@@ -69,23 +71,39 @@ impl Mandelbrot {
             }}
           }}
         ", WINDOW_WIDTH, WINDOW_HEIGHT);
-      ctx.create_program_from_source(ker.as_slice())
+      cl.context.create_program_from_source(ker.as_slice())
     };
-    program.build(&device).unwrap();
+    program.build(&cl.device).unwrap();
 
     let kernel = program.create_kernel("color");
-    kernel.set_arg(0, &self.low_x);
-    kernel.set_arg(1, &self.low_y);
-    kernel.set_arg(2, &self.width);
-    kernel.set_arg(3, &self.height);
-    kernel.set_arg(4, &self.max_iter);
-    kernel.set_arg(5, &self.radius);
+
+    Mandelbrot {
+      low_x: 0.0,
+      low_y: 0.0,
+      width: 0.0,
+      height: 0.0,
+      max_iter: 0,
+      radius: 0.0,
+
+      output_buffer: cl.context.create_buffer(len, opencl::cl::CL_MEM_WRITE_ONLY),
+      program: program,
+      kernel: kernel,
+      len: len,
+    }
+  }
+
+  pub fn render(&self, cl: &CL) -> Vec<RGB> {
+    self.kernel.set_arg(0, &self.low_x);
+    self.kernel.set_arg(1, &self.low_y);
+    self.kernel.set_arg(2, &self.width);
+    self.kernel.set_arg(3, &self.height);
+    self.kernel.set_arg(4, &self.max_iter);
+    self.kernel.set_arg(5, &self.radius);
 
     // This is sketchy; we "implicitly cast" output_buffer from a CLBuffer<RGB> to a CLBuffer<f32>.
-    kernel.set_arg(6, &output_buffer);
+    self.kernel.set_arg(6, &self.output_buffer);
 
-    let event = queue.enqueue_async_kernel(&kernel, len, None, ());
-
-    queue.get(&output_buffer, &event)
+    let event = cl.queue.enqueue_async_kernel(&self.kernel, self.len, None, ());
+    cl.queue.get(&self.output_buffer, &event)
   }
 }
