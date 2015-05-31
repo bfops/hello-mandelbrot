@@ -31,7 +31,7 @@ pub fn main() {
     CL::new()
   };
 
-  let sdl = sdl2::init().everything().unwrap();
+  let mut sdl = sdl2::init().everything().unwrap();
   let window = make_window(&sdl);
 
   let _sdl_gl_context = window.gl_create_context().unwrap();
