@@ -1,15 +1,16 @@
 use gl;
 use mandelbrot::Mandelbrot;
 use opencl_context::CL;
-use std::io::timer;
+use std;
 use std::mem;
-use std::time::duration::Duration;
 use sdl2;
+use sdl2::event;
 use sdl2::event::Event;
 use sdl2::keycode::KeyCode;
 use sdl2::mouse::Mouse;
+use sdl2::video;
 use stopwatch::TimerSet;
-use yaglw::gl_context::{GLContext, GLContextExistence};
+use yaglw::gl_context::GLContext;
 use yaglw::shader::Shader;
 use yaglw::vertex_buffer::{GLArray, GLBuffer, GLType, VertexAttribData, DrawMode};
 
@@ -30,20 +31,21 @@ pub fn main() {
     CL::new()
   };
 
-  let window = make_window();
+  let sdl = sdl2::init().everything().unwrap();
+  let window = make_window(&sdl);
 
   let _sdl_gl_context = window.gl_create_context().unwrap();
 
   // Load the OpenGL function pointers.
   gl::load_with(|s| unsafe {
-    mem::transmute(sdl2::video::gl_get_proc_address(s))
+    mem::transmute(video::gl_get_proc_address(s))
   });
 
-  let (gl, mut gl_context) = unsafe {
+  let mut gl = unsafe {
     GLContext::new()
   };
 
-  match gl_context.get_error() {
+  match gl.get_error() {
     gl::NO_ERROR => {},
     err => {
       println!("OpenGL error 0x{:x} in setup", err);
@@ -52,43 +54,42 @@ pub fn main() {
   }
 
   let shader = make_shader(&gl);
-  shader.use_shader(&mut gl_context);
+  shader.use_shader(&mut gl);
 
-  let mut vao = make_vao(&gl, &mut gl_context, &shader);
-  vao.bind(&mut gl_context);
+  let mut vao = make_vao(&mut gl, &shader);
+  vao.bind(&mut gl);
 
-  let mut mdlbt =
-    Mandelbrot {
-      low_x: -2.0,
-      low_y: -2.0,
-      width: 4.0,
-      height: 4.0,
-      max_iter: 128,
-      radius: 128.0,
-      ..Mandelbrot::new(&cl)
-    };
+  let mut mdlbt = Mandelbrot::new(&cl);
+  mdlbt.low_x = -2.0;
+  mdlbt.low_y = -2.0;
+  mdlbt.width = 4.0;
+  mdlbt.height = 4.0;
+  mdlbt.max_iter = 128;
+  mdlbt.radius = 128.0;
 
   timers.time("update", || {
-    vao.push(&mut gl_context, mdlbt.render(&cl).as_slice());
+    vao.push(&mut gl, mdlbt.render(&cl).as_slice());
   });
 
-  while process_events(&timers, &mut gl_context, &cl, &mut mdlbt, &mut vao) {
+  let mut event_pump = sdl.event_pump();
+
+  while process_events(&timers, &mut gl, &mut event_pump, &cl, &mut mdlbt, &mut vao) {
     timers.time("draw", || {
-      gl_context.clear_buffer();
-      vao.draw(&mut gl_context);
+      gl.clear_buffer();
+      vao.draw(&mut gl);
       // swap buffers
       window.gl_swap_window();
     });
 
-    timer::sleep(Duration::milliseconds(10));
+    std::thread::sleep_ms(10);
   }
 
   timers.print();
 }
 
-fn make_shader<'a>(
-  gl: &'a GLContextExistence,
-) -> Shader<'a> {
+fn make_shader<'a, 'b:'a>(
+  gl: &'a GLContext,
+) -> Shader<'b> {
   let vertex_shader: String = format!("
     #version 330 core
 
@@ -127,33 +128,28 @@ fn make_shader<'a>(
   Shader::new(gl, components.into_iter())
 }
 
-fn make_window() -> sdl2::video::Window {
-  sdl2::init(sdl2::INIT_EVERYTHING);
+fn make_window(sdl: &sdl2::Sdl) -> video::Window {
+  video::gl_attr::set_context_profile(video::GLProfile::Core);
+  video::gl_attr::set_context_version(3, 3);
 
-  sdl2::video::gl_set_attribute(sdl2::video::GLAttr::GLContextMajorVersion, 3);
-  sdl2::video::gl_set_attribute(sdl2::video::GLAttr::GLContextMinorVersion, 3);
-  sdl2::video::gl_set_attribute(
-    sdl2::video::GLAttr::GLContextProfileMask,
-    sdl2::video::GLProfile::GLCoreProfile as isize
-  );
+  // Open the window as fullscreen at the current resolution.
+  let mut window =
+    video::WindowBuilder::new(
+      &sdl,
+      "Hello, Mandelbrot",
+      WINDOW_WIDTH, WINDOW_HEIGHT,
+    );
 
-  let window = sdl2::video::Window::new(
-    "OpenCL",
-    sdl2::video::WindowPos::PosCentered,
-    sdl2::video::WindowPos::PosCentered,
-    WINDOW_WIDTH as isize,
-    WINDOW_HEIGHT as isize,
-    sdl2::video::OPENGL,
-  ).unwrap();
+  let window = window.position_centered();
+  window.opengl();
 
-  window
+  window.build().unwrap()
 }
 
-fn make_vao<'a>(
-  gl: &'a GLContextExistence,
-  gl_context: &mut GLContext,
-  shader: &Shader<'a>,
-) -> GLArray<'a, RGB> {
+fn make_vao<'a, 'b:'a>(
+  gl: &'a mut GLContext,
+  shader: &Shader<'b>,
+) -> GLArray<'b, RGB> {
   let attribs = [
     VertexAttribData {
       name: "color",
@@ -163,11 +159,10 @@ fn make_vao<'a>(
   ];
 
   let capacity = WINDOW_WIDTH as usize * WINDOW_HEIGHT as usize;
-  let vbo = GLBuffer::new(gl, gl_context, capacity);
+  let vbo = GLBuffer::new(gl, capacity);
 
   GLArray::new(
     gl,
-    gl_context,
     shader,
     &attribs,
     DrawMode::Points,
@@ -178,22 +173,23 @@ fn make_vao<'a>(
 fn process_events<'a>(
   timers: &TimerSet,
   gl: &mut GLContext,
+  event_pump: &mut event::EventPump,
   cl: &CL,
   mdlbt: &mut Mandelbrot,
   vao: &mut GLArray<'a, RGB>,
 ) -> bool {
   loop {
-    match sdl2::event::poll_event() {
-      Event::None => {
+    match event_pump.poll_event() {
+      None => {
         return true;
       },
-      Event::Quit(_) => {
+      Some(Event::Quit {..}) => {
         return false;
       },
-      Event::AppTerminating(_) => {
+      Some(Event::AppTerminating {..}) => {
         return false;
       },
-      Event::MouseButtonDown(_, _, _, btn, x, y) => {
+      Some(Event::MouseButtonDown {mouse_btn:btn, x, y, ..}) => {
         let y = WINDOW_HEIGHT as i32 - y;
         match btn {
           Mouse::Left => {
@@ -227,9 +223,9 @@ fn process_events<'a>(
           _ => {},
         };
       },
-      Event::KeyDown(_, _, key, _, _, repeat) => {
+      Some(Event::KeyDown {keycode, repeat, ..}) => {
         if !repeat {
-          match key {
+          match keycode {
             KeyCode::Up => {
               mdlbt.max_iter *= 2;
 

@@ -3,9 +3,9 @@
 name = "hello-mandelbrot"
 version = "0.0.0"
 authors = [
-    "Ben Foppa <benjamin.foppa@gmail.com>",
-    "Elijah Andrews <elijahcandrews@gmail.com>",
-  ]
+  "Zeke Foppa <benjamin.foppa@gmail.com>",
+  "Elijah Andrews <elijahcandrews@gmail.com>",
+]
 
 [[bin]]
 
@@ -27,3 +27,6 @@ git = "https://github.com/bfops/yaglw"
 
 [dependencies.sdl2]
 git = "https://github.com/AngryLawyer/rust-sdl2"
+
+[dependencies.stopwatch]
+git = "https://github.com/bfops/stopwatch-rs"

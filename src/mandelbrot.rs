@@ -3,6 +3,7 @@ use opencl;
 use opencl::hl::{Program, Kernel};
 use opencl::mem::CLBuffer;
 use opencl_context::CL;
+use std::borrow::Borrow;
 
 pub struct Mandelbrot {
   pub low_x: f64,
@@ -14,6 +15,7 @@ pub struct Mandelbrot {
 
   output_buffer: CLBuffer<RGB>,
   len: usize,
+  // TODO: Does this actually need to be kept around?
   program: Program,
   kernel: Kernel,
 }
@@ -71,7 +73,7 @@ impl Mandelbrot {
             }}
           }}
         ", WINDOW_WIDTH, WINDOW_HEIGHT);
-      cl.context.create_program_from_source(ker.as_slice())
+      cl.context.create_program_from_source(ker.borrow())
     };
     program.build(&cl.device).unwrap();
 
