@@ -1,6 +1,6 @@
 use main::{WINDOW_WIDTH, WINDOW_HEIGHT, RGB};
 use opencl;
-use opencl::hl::{Program, Kernel};
+use opencl::hl::{Kernel};
 use opencl::mem::CLBuffer;
 use opencl_context::CL;
 use std::borrow::Borrow;
@@ -15,8 +15,6 @@ pub struct Mandelbrot {
 
   output_buffer: CLBuffer<RGB>,
   len: usize,
-  // TODO: Does this actually need to be kept around?
-  program: Program,
   kernel: Kernel,
 }
 
@@ -88,7 +86,6 @@ impl Mandelbrot {
       radius: 0.0,
 
       output_buffer: cl.context.create_buffer(len, opencl::cl::CL_MEM_WRITE_ONLY),
-      program: program,
       kernel: kernel,
       len: len,
     }
