@@ -80,7 +80,7 @@ dependencies = [
 [[package]]
 name = "opencl"
 version = "0.3.0-dev"
-source = "git+https://github.com/luqmana/rust-opencl#282293c4babb41d87ad17bf0aee4e00112b95298"
+source = "git+https://github.com/luqmana/rust-opencl#60d5956c9cbe32b422ea0d760a82a38515619ac6"
 dependencies = [
  "libc 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -149,7 +149,7 @@ dependencies = [
 [[package]]
 name = "yaglw"
 version = "0.0.0"
-source = "git+https://github.com/bfops/yaglw#baf2202449e3904757651d865af6030b6d343ab8"
+source = "git+https://github.com/bfops/yaglw#544e7cf36a27d6fd6da32af671e6a0673bcdd105"
 dependencies = [
  "gl 0.0.12 (git+https://github.com/bjz/gl-rs)",
  "log 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
