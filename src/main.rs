@@ -14,8 +14,8 @@ use yaglw::gl_context::GLContext;
 use yaglw::shader::Shader;
 use yaglw::vertex_buffer::{GLArray, GLBuffer, GLType, VertexAttribData, DrawMode};
 
-pub const WINDOW_WIDTH: u32 = 800;
-pub const WINDOW_HEIGHT: u32 = 800;
+pub const WINDOW_WIDTH: u32 = 960;
+pub const WINDOW_HEIGHT: u32 = 600;
 
 #[repr(C)]
 pub struct RGB {
@@ -60,10 +60,10 @@ pub fn main() {
   vao.bind(&mut gl);
 
   let mut mdlbt = Mandelbrot::new(&cl);
-  mdlbt.low_x = -2.0;
-  mdlbt.low_y = -2.0;
-  mdlbt.width = 4.0;
-  mdlbt.height = 4.0;
+  mdlbt.height = 3.0;
+  mdlbt.width = mdlbt.height * WINDOW_WIDTH as f64 / WINDOW_HEIGHT as f64;
+  mdlbt.low_x = -mdlbt.width / 2.0;
+  mdlbt.low_y = -mdlbt.height / 2.0;
   mdlbt.max_iter = 128;
   mdlbt.radius = 128.0;
 
@@ -81,7 +81,7 @@ pub fn main() {
       window.gl_swap_window();
     });
 
-    std::thread::sleep_ms(10);
+    std::thread::sleep(std::time::Duration::from_millis(10));
   }
 
   timers.print();
